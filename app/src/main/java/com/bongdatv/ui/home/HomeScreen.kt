@@ -36,14 +36,18 @@ import com.bongdatv.ui.components.HeroBanner
 import com.bongdatv.ui.components.MatchRow
 import com.bongdatv.ui.theme.AccentGreen
 import com.bongdatv.ui.theme.CardBackground
+import com.bongdatv.ui.theme.LiveRed
 import com.bongdatv.ui.theme.TextPrimary
 import com.bongdatv.ui.theme.TextSecondary
+import com.bongdatv.update.UpdateInfo
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMatchClick: (fixtureId: String, streamUrl: String) -> Unit,
-    onNavigateToSchedule: () -> Unit = {}
+    onNavigateToSchedule: () -> Unit = {},
+    updateInfo: UpdateInfo? = null,
+    onUpdateClick: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -92,7 +96,12 @@ fun HomeScreen(
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
-            NavButton(text = "Lịch thi đấu", onClick = onNavigateToSchedule)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (updateInfo != null) {
+                    UpgradeButton(version = updateInfo.version, onClick = onUpdateClick)
+                }
+                NavButton(text = "Lịch thi đấu", onClick = onNavigateToSchedule)
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -136,6 +145,31 @@ fun HomeScreen(
         )
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun UpgradeButton(version: String, onClick: () -> Unit) {
+    var isFocused by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier
+            .background(LiveRed.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) AccentGreen else LiveRed,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .onFocusChanged { isFocused = it.isFocused }
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(text = "⬆", fontSize = 14.sp)
+            Text(text = "v$version", color = LiveRed, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 

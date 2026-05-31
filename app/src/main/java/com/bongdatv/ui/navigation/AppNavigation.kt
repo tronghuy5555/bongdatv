@@ -54,6 +54,13 @@ fun AppNavigation() {
                     },
                     onNavigateToSchedule = {
                         navController.navigate("schedule")
+                    },
+                    updateInfo = updateInfo,
+                    onUpdateClick = {
+                        updateInfo?.let {
+                            val checker = UpdateChecker(okhttp3.OkHttpClient())
+                            checker.downloadAndInstall(context, it)
+                        }
                     }
                 )
             }

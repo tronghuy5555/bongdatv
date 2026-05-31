@@ -1,3 +1,7 @@
 -keepattributes *Annotation*
 -keep class kotlinx.serialization.** { *; }
 -keepclassmembers class com.bongdatv.data.model.** { *; }
+-keepclassmembers class com.bongdatv.update.** { *; }
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**

@@ -19,9 +19,9 @@ Automate the full release process for BongDaTV.
 
 4. **Update `CHANGELOG.md`** — Add a new section at the top with today's date and the changes described.
 
-5. **Build the APK**:
+5. **Build the release APK**:
    ```bash
-   ./gradlew assembleDebug
+   ./gradlew assembleRelease
    ```
    If build fails, fix the issue before continuing.
 
@@ -36,7 +36,7 @@ Automate the full release process for BongDaTV.
 7. **Create GitHub Release**:
    ```bash
    gh release create v<version> \
-     app/build/outputs/apk/debug/app-debug.apk \
+     app/build/outputs/apk/release/app-release.apk \
      --title "v<version>" \
      --notes "<changelog entry for this version>" \
      --repo tronghuy5555/bongdatv
@@ -44,7 +44,13 @@ Automate the full release process for BongDaTV.
 
 8. **Confirm** — Report the release URL and what version the app will now auto-update to.
 
+## Build Types
+- **Debug** (`./gradlew assembleDebug`): For local testing on emulator/device. Output: `app/build/outputs/apk/debug/app-debug.apk`
+- **Release** (`./gradlew assembleRelease`): For production releases. Signed with release keystore, ProGuard minified. Output: `app/build/outputs/apk/release/app-release.apk`
+
 ## Notes
-- APK is at `app/build/outputs/apk/debug/app-debug.apk` after build
+- Always use release APK for GitHub Releases (production)
+- Use debug APK only for local testing via `deploy-test` skill
 - Tag format: `v1.0.0`, `v1.1.0`, etc.
 - The app's `UpdateChecker` will pick up the new release automatically on next launch
+- Keystore is at `keystore/release.jks` (gitignored, keep safe!)

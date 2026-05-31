@@ -52,6 +52,7 @@ class UpdateChecker @Inject constructor(
             val request = Request.Builder()
                 .url("https://api.github.com/repos/$owner/$repo/releases/latest")
                 .header("Accept", "application/vnd.github.v3+json")
+                .header("User-Agent", "BongDaTV-Android")
                 .build()
 
             val response = okHttpClient.newCall(request).execute()
