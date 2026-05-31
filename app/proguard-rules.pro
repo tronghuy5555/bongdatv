@@ -1,0 +1,3 @@
+-keepattributes *Annotation*
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class com.bongdatv.data.model.** { *; }
