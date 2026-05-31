@@ -2,7 +2,7 @@ package com.bongdatv.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,7 +57,7 @@ fun HeroBanner(
                 shape = RoundedCornerShape(16.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
-            .focusable()
+            .clickable { onClick() }
     ) {
         AsyncImage(
             model = fixture.sport?.backgroundMainUrl,
