@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soccer ball -->
+    <path
+        android:pathData="M54,32 C41.85,32 32,41.85 32,54 C32,66.15 41.85,76 54,76 C66.15,76 76,66.15 76,54 C76,41.85 66.15,32 54,32Z"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Hexagonal pattern - top -->
+    <path
+        android:pathData="M54,36 L50,41 L52,47 L56,47 L58,41Z"
+        android:fillColor="#2E7D32"/>
+
+    <!-- Hexagonal pattern - left -->
+    <path
+        android:pathData="M43,50 L38,54 L40,60 L46,61 L47,55Z"
+        android:fillColor="#2E7D32"/>
+
+    <!-- Hexagonal pattern - right -->
+    <path
+        android:pathData="M65,50 L61,55 L62,61 L68,60 L70,54Z"
+        android:fillColor="#2E7D32"/>
+
+    <!-- Hexagonal pattern - bottom left -->
+    <path
+        android:pathData="M47,65 L44,71 L50,74 L54,70 L51,65Z"
+        android:fillColor="#2E7D32"/>
+
+    <!-- Hexagonal pattern - bottom right -->
+    <path
+        android:pathData="M57,65 L54,70 L58,74 L64,71 L61,65Z"
+        android:fillColor="#2E7D32"/>
+
+    <!-- TV antenna lines -->
+    <path
+        android:pathData="M44,30 L50,36"
+        android:strokeWidth="2.5"
+        android:strokeColor="#4CAF50"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <path
+        android:pathData="M64,30 L58,36"
+        android:strokeWidth="2.5"
+        android:strokeColor="#4CAF50"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+
+    <!-- "BongDa TV" text arc -->
+    <path
+        android:pathData="M36,80 L38,78 L40,80"
+        android:strokeWidth="1.5"
+        android:strokeColor="#4CAF50"
+        android:fillColor="#00000000"/>
+</vector>
