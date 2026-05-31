@@ -68,7 +68,14 @@ fun PlayerScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { ctx ->
-                PlayerView(ctx).apply {
+                object : PlayerView(ctx) {
+                    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+                        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+                            return false
+                        }
+                        return super.dispatchKeyEvent(event)
+                    }
+                }.apply {
                     player = exoPlayer
                     useController = true
                 }

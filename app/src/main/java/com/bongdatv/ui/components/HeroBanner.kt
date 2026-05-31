@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -40,7 +42,8 @@ import com.bongdatv.ui.theme.TextPrimary
 fun HeroBanner(
     fixture: Fixture?,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    focusRequester: FocusRequester? = null
 ) {
     if (fixture == null) return
 
@@ -57,6 +60,7 @@ fun HeroBanner(
                 shape = RoundedCornerShape(16.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .clickable { onClick() }
     ) {
         AsyncImage(
