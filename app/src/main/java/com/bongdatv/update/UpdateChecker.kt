@@ -1,18 +1,18 @@
 package com.bongdatv.update
 
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Environment
-import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,31 +78,46 @@ class UpdateChecker @Inject constructor(
     }
 
     fun downloadAndInstall(context: Context, updateInfo: UpdateInfo) {
+        val fileName = "bongdatv-${updateInfo.version}.apk"
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val request = DownloadManager.Request(Uri.parse(updateInfo.downloadUrl))
             .setTitle("BongDa TV ${updateInfo.version}")
             .setDescription("Đang tải bản cập nhật...")
-            .setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_DOWNLOADS,
-                "bongdatv-${updateInfo.version}.apk"
-            )
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
 
-        downloadManager.enqueue(request)
-    }
+        val downloadId = downloadManager.enqueue(request)
 
-    fun installApk(context: Context, file: File) {
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                if (id != downloadId) return
+                ctx.unregisterReceiver(this)
+
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+                if (cursor.moveToFirst()) {
+                    val statusCol = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    if (statusCol >= 0 && cursor.getInt(statusCol) == DownloadManager.STATUS_SUCCESSFUL) {
+                        val uriCol = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                        if (uriCol >= 0) {
+                            val localUri = Uri.parse(cursor.getString(uriCol))
+                            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(localUri, "application/vnd.android.package-archive")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            ctx.startActivity(installIntent)
+                        }
+                    }
+                }
+                cursor.close()
+            }
         }
-        context.startActivity(intent)
+        context.registerReceiver(
+            receiver,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        )
     }
 
     private fun isNewerVersion(latest: String, current: String): Boolean {

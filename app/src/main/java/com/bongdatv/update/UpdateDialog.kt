@@ -38,6 +38,7 @@ import com.bongdatv.ui.theme.TextSecondary
 @Composable
 fun UpdateDialog(
     version: String,
+    releaseNotes: String? = null,
     onUpdate: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -72,6 +73,15 @@ fun UpdateDialog(
                 color = TextSecondary,
                 fontSize = 16.sp
             )
+
+            if (!releaseNotes.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = releaseNotes,
+                    color = TextSecondary,
+                    fontSize = 14.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

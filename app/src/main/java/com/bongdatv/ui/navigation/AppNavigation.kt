@@ -85,6 +85,7 @@ fun AppNavigation() {
         if (showUpdateDialog && updateInfo != null) {
             UpdateDialog(
                 version = updateInfo!!.version,
+                releaseNotes = updateInfo!!.releaseNotes,
                 onUpdate = {
                     showUpdateDialog = false
                     val checker = UpdateChecker(okhttp3.OkHttpClient())
