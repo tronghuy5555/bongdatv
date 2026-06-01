@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-06-01
+### Fixed
+- Auto-update now installs APK automatically after download completes
+- Update dialog shows changelog content from the release
+
 ## [1.1.0] - 2026-05-31
 ### Added
 - Upgrade icon in home top bar when newer version available
