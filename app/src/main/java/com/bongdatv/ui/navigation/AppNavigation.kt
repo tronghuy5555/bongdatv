@@ -49,8 +49,8 @@ fun AppNavigation() {
         NavHost(navController = navController, startDestination = "home") {
             composable("home") {
                 HomeScreen(
-                    onMatchClick = { fixtureId, streamUrl ->
-                        navController.navigate("player/$fixtureId?url=$streamUrl")
+                    onMatchClick = { fixtureId ->
+                        navController.navigate("player/$fixtureId")
                     },
                     onNavigateToSchedule = {
                         navController.navigate("schedule")
@@ -66,16 +66,14 @@ fun AppNavigation() {
             }
             composable("schedule") {
                 ScheduleScreen(
-                    onMatchClick = { fixtureId, streamUrl ->
-                        navController.navigate("player/$fixtureId?url=$streamUrl")
+                    onMatchClick = { fixtureId ->
+                        navController.navigate("player/$fixtureId")
                     }
                 )
             }
-            composable("player/{fixtureId}?url={streamUrl}") { backStackEntry ->
-                val streamUrl = backStackEntry.arguments?.getString("streamUrl") ?: ""
+            composable("player/{fixtureId}") { backStackEntry ->
                 val fixtureId = backStackEntry.arguments?.getString("fixtureId") ?: ""
                 PlayerScreen(
-                    streamUrl = streamUrl,
                     fixtureId = fixtureId,
                     onBack = { navController.popBackStack() }
                 )

@@ -2,6 +2,7 @@ package com.bongdatv.ui.schedule
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +44,7 @@ import com.bongdatv.ui.theme.TextSecondary
 @Composable
 fun ScheduleScreen(
     viewModel: ScheduleViewModel = hiltViewModel(),
-    onMatchClick: (fixtureId: String, streamUrl: String) -> Unit
+    onMatchClick: (fixtureId: String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -82,10 +83,7 @@ fun ScheduleScreen(
                 ScheduleMatchItem(
                     fixture = fixture,
                     onClick = {
-                        val stream = fixture.fixtureCommentators
-                            .firstOrNull()?.commentator?.streams
-                            ?.firstOrNull()?.sourceUrl ?: ""
-                        onMatchClick(fixture.id.toString(), stream)
+                        onMatchClick(fixture.id.toString())
                     }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -114,6 +112,7 @@ private fun ScheduleMatchItem(
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
+            .clickable { onClick() }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

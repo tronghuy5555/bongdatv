@@ -46,7 +46,7 @@ import com.bongdatv.update.UpdateInfo
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    onMatchClick: (fixtureId: String, streamUrl: String) -> Unit,
+    onMatchClick: (fixtureId: String) -> Unit,
     onNavigateToSchedule: () -> Unit = {},
     updateInfo: UpdateInfo? = null,
     onUpdateClick: () -> Unit = {}
@@ -206,10 +206,7 @@ private fun NavButton(text: String, onClick: () -> Unit) {
 
 private fun navigateToPlayer(
     fixture: Fixture,
-    onMatchClick: (String, String) -> Unit
+    onMatchClick: (String) -> Unit
 ) {
-    val stream = fixture.fixtureCommentators
-        .firstOrNull()?.commentator?.streams
-        ?.firstOrNull()?.sourceUrl ?: ""
-    onMatchClick(fixture.id.toString(), stream)
+    onMatchClick(fixture.id.toString())
 }

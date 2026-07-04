@@ -30,8 +30,24 @@ class SportRepository @Inject constructor(
         hoiQuanApi.getFinishedFixtures().data
     }
 
+    suspend fun getFixtureById(fixtureId: String): Result<Fixture> = runCatching {
+        val id = fixtureId.toIntOrNull()
+
+        findFixture(hoiQuanApi.getUnfinishedFixtures().data, fixtureId, id)
+            ?: findFixture(hoiQuanApi.getFinishedFixtures().data, fixtureId, id)
+            ?: findFixture(hoiQuanApi.getReplays().data, fixtureId, id)
+            ?: error("Fixture not found: $fixtureId")
+    }
+
     suspend fun getLiveStats(referenceIds: List<String>): Result<LiveStatsResponse> = runCatching {
         val ids = referenceIds.joinToString("-")
         liveStatsApi.getFixturesByIds(ids = ids)
     }
+
+    private fun findFixture(fixtures: List<Fixture>, fixtureId: String, id: Int?): Fixture? =
+        fixtures.firstOrNull { fixture ->
+            fixture.id == id ||
+                fixture.referenceId == fixtureId ||
+                fixture.slug == fixtureId
+        }
 }
