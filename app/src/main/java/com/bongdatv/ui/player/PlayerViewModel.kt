@@ -54,7 +54,8 @@ class PlayerViewModel @Inject constructor(
                     streamOptions = emptyList(),
                     selectedStream = null,
                     isLoading = false,
-                    error = "Không tìm thấy trận đấu."
+                    error = "Không tìm thấy trận đấu.",
+                    showOverlay = true
                 )
             }
             return
@@ -70,7 +71,8 @@ class PlayerViewModel @Inject constructor(
                     isLoading = true,
                     error = null,
                     status = null,
-                    goals = null
+                    goals = null,
+                    showOverlay = true
                 )
             }
 
@@ -101,7 +103,8 @@ class PlayerViewModel @Inject constructor(
                             streamOptions = emptyList(),
                             selectedStream = null,
                             isLoading = false,
-                            error = "Không thể tải trận đấu. Vui lòng thử lại."
+                            error = "Không thể tải trận đấu. Vui lòng thử lại.",
+                            showOverlay = true
                         )
                     }
                 }
@@ -140,6 +143,14 @@ class PlayerViewModel @Inject constructor(
 
     fun toggleOverlay() {
         _uiState.value = _uiState.value.copy(showOverlay = !_uiState.value.showOverlay)
+    }
+
+    fun showOverlay() {
+        _uiState.value = _uiState.value.copy(showOverlay = true)
+    }
+
+    fun hideOverlay() {
+        _uiState.value = _uiState.value.copy(showOverlay = false)
     }
 
     override fun onCleared() {

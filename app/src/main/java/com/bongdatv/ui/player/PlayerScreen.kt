@@ -1,6 +1,7 @@
 package com.bongdatv.ui.player
 
 import android.net.Uri
+import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,8 +32,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,11 +65,13 @@ import com.bongdatv.ui.theme.CardBackground
 import com.bongdatv.ui.theme.LiveRed
 import com.bongdatv.ui.theme.TextPrimary
 import com.bongdatv.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 
 private const val WEB_REFERER = "https://sv2.hoiquan7.live/trang-chu"
 private const val WEB_ORIGIN = "https://sv2.hoiquan7.live"
 private const val WEB_USER_AGENT =
     "Mozilla/5.0 (Linux; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
+private const val OVERLAY_AUTO_HIDE_MS = 5_000L
 
 @Composable
 fun PlayerScreen(
@@ -72,6 +82,7 @@ fun PlayerScreen(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsState()
     val selectedStreamUrl = state.selectedStream?.sourceUrl
+    val playerFocusRequester = remember { FocusRequester() }
 
     val exoPlayer = remember(context) {
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -93,6 +104,12 @@ fun PlayerScreen(
         viewModel.loadFixture(fixtureId)
     }
 
+    LaunchedEffect(state.showOverlay) {
+        if (!state.showOverlay) {
+            playerFocusRequester.requestFocus()
+        }
+    }
+
     LaunchedEffect(selectedStreamUrl) {
         if (selectedStreamUrl.isNullOrBlank()) {
             exoPlayer.stop()
@@ -104,6 +121,13 @@ fun PlayerScreen(
         }
     }
 
+    LaunchedEffect(state.showOverlay, selectedStreamUrl, state.fixture?.id, state.isLoading) {
+        if (state.showOverlay && !state.isLoading && !selectedStreamUrl.isNullOrBlank()) {
+            delay(OVERLAY_AUTO_HIDE_MS)
+            viewModel.hideOverlay()
+        }
+    }
+
     DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer.release()
@@ -112,19 +136,38 @@ fun PlayerScreen(
 
     BackHandler { onBack() }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(playerFocusRequester)
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key.shouldShowOverlay()) {
+                    val wasHidden = !state.showOverlay
+                    viewModel.showOverlay()
+                    wasHidden
+                } else {
+                    false
+                }
+            }
+            .focusable()
+    ) {
         AndroidView(
             factory = { ctx ->
                 object : PlayerView(ctx) {
-                    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
-                        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+                    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+                        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                             return false
+                        }
+                        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode.shouldShowOverlay()) {
+                            viewModel.showOverlay()
                         }
                         return super.dispatchKeyEvent(event)
                     }
                 }.apply {
                     player = exoPlayer
-                    useController = true
+                    useController = false
+                    isFocusable = false
+                    isFocusableInTouchMode = false
                 }
             },
             modifier = Modifier.fillMaxSize()
@@ -151,6 +194,26 @@ fun PlayerScreen(
         }
     }
 }
+
+private fun Int.shouldShowOverlay(): Boolean =
+    this == KeyEvent.KEYCODE_DPAD_CENTER ||
+        this == KeyEvent.KEYCODE_ENTER ||
+        this == KeyEvent.KEYCODE_NUMPAD_ENTER ||
+        this == KeyEvent.KEYCODE_DPAD_UP ||
+        this == KeyEvent.KEYCODE_DPAD_DOWN ||
+        this == KeyEvent.KEYCODE_DPAD_LEFT ||
+        this == KeyEvent.KEYCODE_DPAD_RIGHT ||
+        this == KeyEvent.KEYCODE_MENU
+
+private fun Key.shouldShowOverlay(): Boolean =
+    this == Key.DirectionCenter ||
+        this == Key.Enter ||
+        this == Key.NumPadEnter ||
+        this == Key.DirectionUp ||
+        this == Key.DirectionDown ||
+        this == Key.DirectionLeft ||
+        this == Key.DirectionRight ||
+        this == Key.Menu
 
 @Composable
 private fun CenterNotice(message: String) {
