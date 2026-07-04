@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2026-07-04
+### Fixed
+- Player detail overlay can be toggled on or off from the settings icon with a TV remote
+- Player keeps the screen awake during long streams so Android TV does not return to the launcher while video is playing
+
 ## [1.3.0] - 2026-07-04
 ### Added
 - Player loads match details by fixture ID and supports multiple stream options from fixture commentators
