@@ -1,8 +1,13 @@
 package com.bongdatv.ui.player
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.net.Uri
 import android.view.KeyEvent
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,12 +41,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +66,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
+import com.bongdatv.R
 import com.bongdatv.data.model.Fixture
 import com.bongdatv.data.model.LiveGoals
 import com.bongdatv.data.model.LiveStatus
@@ -65,13 +75,11 @@ import com.bongdatv.ui.theme.CardBackground
 import com.bongdatv.ui.theme.LiveRed
 import com.bongdatv.ui.theme.TextPrimary
 import com.bongdatv.ui.theme.TextSecondary
-import kotlinx.coroutines.delay
 
 private const val WEB_REFERER = "https://sv2.hoiquan7.live/trang-chu"
 private const val WEB_ORIGIN = "https://sv2.hoiquan7.live"
 private const val WEB_USER_AGENT =
     "Mozilla/5.0 (Linux; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"
-private const val OVERLAY_AUTO_HIDE_MS = 5_000L
 
 @Composable
 fun PlayerScreen(
@@ -80,9 +88,11 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val activity = context.findActivity()
     val state by viewModel.uiState.collectAsState()
     val selectedStreamUrl = state.selectedStream?.sourceUrl
-    val playerFocusRequester = remember { FocusRequester() }
+    val detailToggleFocusRequester = remember { FocusRequester() }
+    var initialFocusFixtureId by remember { mutableStateOf<Int?>(null) }
 
     val exoPlayer = remember(context) {
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -104,9 +114,31 @@ fun PlayerScreen(
         viewModel.loadFixture(fixtureId)
     }
 
-    LaunchedEffect(state.showOverlay) {
-        if (!state.showOverlay) {
-            playerFocusRequester.requestFocus()
+    DisposableEffect(activity) {
+        val window = activity?.window
+        val alreadyKeepingScreenOn = window?.attributes?.flags
+            ?.and(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) == WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        onDispose {
+            if (!alreadyKeepingScreenOn) {
+                window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+
+    LaunchedEffect(state.fixture?.id, state.isLoading) {
+        val loadedFixtureId = state.fixture?.id
+        if (loadedFixtureId != null && !state.isLoading && initialFocusFixtureId != loadedFixtureId) {
+            initialFocusFixtureId = loadedFixtureId
+            detailToggleFocusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(state.showOverlay, state.fixture?.id, state.isLoading) {
+        if (!state.showOverlay && state.fixture != null && !state.isLoading) {
+            detailToggleFocusRequester.requestFocus()
         }
     }
 
@@ -121,13 +153,6 @@ fun PlayerScreen(
         }
     }
 
-    LaunchedEffect(state.showOverlay, selectedStreamUrl, state.fixture?.id, state.isLoading) {
-        if (state.showOverlay && !state.isLoading && !selectedStreamUrl.isNullOrBlank()) {
-            delay(OVERLAY_AUTO_HIDE_MS)
-            viewModel.hideOverlay()
-        }
-    }
-
     DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer.release()
@@ -139,12 +164,16 @@ fun PlayerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .focusRequester(playerFocusRequester)
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key.shouldShowOverlay()) {
-                    val wasHidden = !state.showOverlay
-                    viewModel.showOverlay()
-                    wasHidden
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    when {
+                        keyEvent.key.isOverlayToggleKey() -> {
+                            viewModel.toggleOverlay()
+                            true
+                        }
+
+                        else -> false
+                    }
                 } else {
                     false
                 }
@@ -158,8 +187,9 @@ fun PlayerScreen(
                         if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                             return false
                         }
-                        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode.shouldShowOverlay()) {
-                            viewModel.showOverlay()
+                        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode.isOverlayToggleKey()) {
+                            viewModel.toggleOverlay()
+                            return true
                         }
                         return super.dispatchKeyEvent(event)
                     }
@@ -192,28 +222,89 @@ fun PlayerScreen(
                     .padding(24.dp)
             )
         }
+
+        if (!state.isLoading && state.fixture != null) {
+            DetailOverlayToggleButton(
+                isOverlayVisible = state.showOverlay,
+                onToggle = viewModel::toggleOverlay,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(24.dp)
+                    .focusRequester(detailToggleFocusRequester)
+            )
+        }
     }
 }
 
-private fun Int.shouldShowOverlay(): Boolean =
-    this == KeyEvent.KEYCODE_DPAD_CENTER ||
-        this == KeyEvent.KEYCODE_ENTER ||
-        this == KeyEvent.KEYCODE_NUMPAD_ENTER ||
-        this == KeyEvent.KEYCODE_DPAD_UP ||
-        this == KeyEvent.KEYCODE_DPAD_DOWN ||
-        this == KeyEvent.KEYCODE_DPAD_LEFT ||
-        this == KeyEvent.KEYCODE_DPAD_RIGHT ||
-        this == KeyEvent.KEYCODE_MENU
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 
-private fun Key.shouldShowOverlay(): Boolean =
+private fun Int.isOverlayToggleKey(): Boolean =
+    this == KeyEvent.KEYCODE_MENU
+
+private fun Key.isOverlayToggleKey(): Boolean =
+    this == Key.Menu
+
+private fun Key.isSelectKey(): Boolean =
     this == Key.DirectionCenter ||
         this == Key.Enter ||
-        this == Key.NumPadEnter ||
-        this == Key.DirectionUp ||
-        this == Key.DirectionDown ||
-        this == Key.DirectionLeft ||
-        this == Key.DirectionRight ||
-        this == Key.Menu
+        this == Key.NumPadEnter
+
+@Composable
+private fun DetailOverlayToggleButton(
+    isOverlayVisible: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val actionLabel = if (isOverlayVisible) {
+        "Ẩn thông tin trận đấu"
+    } else {
+        "Hiện thông tin trận đấu"
+    }
+
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .background(
+                color = Color.Black.copy(alpha = if (isOverlayVisible) 0.72f else 0.56f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) AccentGreen else TextSecondary.copy(alpha = 0.55f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .semantics { contentDescription = actionLabel }
+            .onFocusChanged {
+                isFocused = it.isFocused
+            }
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key.isSelectKey()) {
+                    onToggle()
+                    true
+                } else {
+                    false
+                }
+            }
+            .focusable()
+            .clickable { onToggle() },
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_settings_24),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(
+                if (isFocused || isOverlayVisible) AccentGreen else TextPrimary
+            ),
+            modifier = Modifier.size(26.dp)
+        )
+    }
+}
 
 @Composable
 private fun CenterNotice(message: String) {
