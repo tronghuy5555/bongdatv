@@ -55,6 +55,7 @@ fun AppNavigation() {
                     onNavigateToSchedule = {
                         navController.navigate("schedule")
                     },
+                    appVersion = BuildConfig.VERSION_NAME,
                     updateInfo = updateInfo,
                     onUpdateClick = {
                         updateInfo?.let {

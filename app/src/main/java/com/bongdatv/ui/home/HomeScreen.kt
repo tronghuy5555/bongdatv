@@ -48,6 +48,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMatchClick: (fixtureId: String) -> Unit,
     onNavigateToSchedule: () -> Unit = {},
+    appVersion: String = "",
     updateInfo: UpdateInfo? = null,
     onUpdateClick: () -> Unit = {}
 ) {
@@ -94,12 +95,22 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "BongDa TV",
-                color = AccentGreen,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column {
+                Text(
+                    text = "BongDa TV",
+                    color = AccentGreen,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                if (appVersion.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Phiên bản $appVersion",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (updateInfo != null) {
                     UpgradeButton(version = updateInfo.version, onClick = onUpdateClick)
