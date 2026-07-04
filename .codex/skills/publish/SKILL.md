@@ -1,6 +1,6 @@
 ---
 name: publish
-description: Build a BongDaTV release APK, bump version, update changelog, create a git tag, and publish a GitHub Release with the APK attached. Use when the user says "publish", "release", "ship", "new version", or asks to create a production release.
+description: Build and publish a BongDaTV production release by first running the project-local bump-version and changelog workflows, then creating the release APK, git tag, and GitHub Release. Use when the user says "publish", "release", "ship", "new version", or asks to create a production release.
 ---
 
 # Publish Release
@@ -11,15 +11,17 @@ Automate the full release process for BongDaTV.
 
 1. Ask what changed. Use the user's existing description if already provided.
 
-2. Determine the version bump. Ask whether this is patch, minor, or major. Default to minor only if the user leaves it unclear.
+2. Run the version workflow:
+   - Read `.codex/skills/bump-version/SKILL.md` completely.
+   - Follow its steps to determine the bump type and update `app/build.gradle.kts`.
+   - If the user already bumped the version for this release in the current worktree, treat the workflow as satisfied after confirming `versionCode` and `versionName`; do not bump twice unless the user explicitly asks.
 
-3. Bump the version in `app/build.gradle.kts`:
-   - Increment `versionCode` by 1
-   - Update `versionName` to the new semver
+3. Run the changelog workflow:
+   - Read `.codex/skills/changelog/SKILL.md` completely.
+   - Follow its steps using the release version from `app/build.gradle.kts`.
+   - If `CHANGELOG.md` already has an entry for the release version, update that entry instead of adding a duplicate.
 
-4. Update `CHANGELOG.md`. Add a new section at the top with today's date and the described changes.
-
-5. Build the release APK:
+4. Build the release APK:
 
    ```bash
    ./gradlew assembleRelease
@@ -27,7 +29,7 @@ Automate the full release process for BongDaTV.
 
    If the build fails, fix the issue before continuing.
 
-6. Commit, tag, and push:
+5. Commit, tag, and push:
 
    ```bash
    git add -A
@@ -36,7 +38,7 @@ Automate the full release process for BongDaTV.
    git push origin main --tags
    ```
 
-7. Create the GitHub Release:
+6. Create the GitHub Release:
 
    ```bash
    gh release create v<version> \
@@ -46,7 +48,7 @@ Automate the full release process for BongDaTV.
      --repo tronghuy5555/bongdatv
    ```
 
-8. Confirm the release URL and the version the app will auto-update to.
+7. Confirm the release URL and the version the app will auto-update to.
 
 ## Build Types
 
@@ -57,6 +59,7 @@ Automate the full release process for BongDaTV.
 
 - Always use release APK for GitHub Releases.
 - Use debug APK only for local testing via the `deploy-test` skill.
+- Treat this skill as the release orchestrator. Do not duplicate or bypass the `bump-version` and `changelog` workflows.
 - Tag format is `v1.0.0`, `v1.1.0`, etc.
 - The app's `UpdateChecker` will pick up the new release automatically on next launch.
 - The release keystore is at `keystore/release.jks` and is gitignored.

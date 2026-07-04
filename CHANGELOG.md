@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0] - 2026-07-04
+### Added
+- Player loads match details by fixture ID and supports multiple stream options from fixture commentators
+- Match detail overlay with loading, error, stream selection, and live score feedback
+- GitHub Actions CI with unit tests for fixture parsing and update version comparison
+- Project-local Codex workflows for versioning, changelog updates, emulator testing, and publishing
+
+### Fixed
+- Player playback works with the updated HoiQuanTV web source headers
+- Player overlay auto-hides after playback starts and can be shown again with D-pad controls
+
+### Changed
+- Home and schedule navigation open player screens by fixture ID instead of passing stream URLs directly
+- Player state handling now manages fixture loading, stream selection, and live updates more reliably
+
 ## [1.2.0] - 2026-06-01
 ### Fixed
 - Auto-update now installs APK automatically after download completes
